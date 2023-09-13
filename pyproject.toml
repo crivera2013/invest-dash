@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "invest-dash"
+version = "0.1.0"
+description = "investment dashboard POC in python"
+authors = ["Christian Rivera"]
+readme = "README.md"
+packages = [{include = "invest_dash"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+dash = "^2.13.0"
+flake8 = "^6.1.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
