@@ -5,6 +5,8 @@ from dash import Dash, dcc, html
 from asset_allocator import callbacks as asset_allocator_callbacks
 from asset_allocator import frontend as asset_allocator_frontend
 
+from rlmodel import frontend as rl_frontend
+
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
 
@@ -35,16 +37,8 @@ app.layout = html.Div(
                     ],
                 ),
                 dcc.Tab(
-                    label="IEX Real-Time Data Feed ",
-                    children=[
-                        # tabCode.getTab3()
-                    ],
-                ),
-                dcc.Tab(
-                    label="Reinforcement Learning",
-                    children=[
-                        # tabCode.getTab4()
-                    ],
+                    label="Reinforcement Learning Model Example",
+                    children=[rl_frontend.load_html()],
                 ),
             ],
         ),
