@@ -1,6 +1,9 @@
+"""Contains the intial app layout and the main function for running the Dash app"""
+
 from dash import Dash, dcc, html
-from asset_allocator import frontend as asset_allocator_frontend
+
 from asset_allocator import callbacks as asset_allocator_callbacks
+from asset_allocator import frontend as asset_allocator_frontend
 
 external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
@@ -48,9 +51,6 @@ app.layout = html.Div(
     ]
 )
 
-#############################################
 
-
-#############################################
 if __name__ == "__main__":
     app.run(debug=True)

@@ -1,16 +1,23 @@
-from dash import Input, Output, State
-from plotly.graph_objs import Layout, Scatter
-import pandas as pd
+"""Contains the callback logic for all the data being rendered on the UI"""
+
 import json
-import requests
+
+import pandas as pd
+from dash import Input, Output
+from plotly.graph_objs import Layout, Scatter
+
+from asset_allocator import calculations
 
 
 def get_callbacks(app):
+    """wrapper functioon to assign all the callbacks for the asset_allocator tab
+    to the app object"""
+
     @app.callback(
         Output(component_id="the-graph", component_property="figure"),
         [Input("hidden-table-data", "children")],
     )
-    def line_graph(values):
+    def plot_line_graph(values):
         values = json.loads(values)
 
         portfolio = pd.DataFrame(values["portfolio"])
@@ -54,63 +61,85 @@ def get_callbacks(app):
             legend=dict(x=0, y=1),
         )
 
-        config = {"scrollZoom": True, "displayModeBar": False, "editable": False}
-
-        results = {"data": traces, "layout": layout, "config": config}
+        results = {"data": traces, "layout": layout}
 
         return results
 
     @app.callback(Output("datatable", "data"), [Input("hidden-table-data", "children")])
-    def tableTime(values):
+    def update_allocations_table(values):
         values = json.loads(values)
         stocks = values["stocks"]
+        print(stocks)
         allocations = values["allocations"]
-
         allocations = [str(round(i * 100, 2)) + "%" for i in allocations]
 
-        record = [dict(zip(stocks, allocations))]
-        return record
+        return pd.DataFrame(columns=stocks, data=[allocations]).to_dict("records")
 
     @app.callback(
         Output(component_id="hidden-graph-data", component_property="children"),
         [
             Input(component_id="date-ranger", component_property="value"),
             Input(component_id="stock-picker", component_property="value"),
-        ],
-        [
-            State(component_id="benchmarker", component_property="value"),
-            State(component_id="optimizer", component_property="value"),
+            Input(component_id="benchmarker", component_property="value"),
         ],
     )
-    def get_the_data(daterange, stocks, benchmark, optimizer):
-        initial_port, dates = getPortfolio(daterange, stocks)
+    def query_eod_data(date_lookback: str, stocks: list[str], benchmark: str) -> dict:
+        end_date = pd.Timestamp.now()
+        if date_lookback == "6m":
+            start_date = end_date - pd.DateOffset(months=6)
+        elif date_lookback == "ytd":
+            start_date = pd.Timestamp(end_date.year, 1, 1)
+        elif date_lookback == "1y":
+            start_date = end_date - pd.DateOffset(years=1)
+        elif date_lookback == "2y":
+            start_date = end_date - pd.DateOffset(years=2)
+        else:
+            raise ValueError("Invalid date range")
 
+        initial_port, dates = calculations.get_port_data(
+            start_date, end_date, benchmark, stocks
+        )
         initial_port = initial_port.to_dict("records")
 
-        result = dict(initial_port=initial_port, dates=dates, stocks=stocks)
+        result: dict = dict(initial_port=initial_port, dates=dates, stocks=stocks)
+
+        return json.dumps(result)  # type: ignore
+
+    @app.callback(
+        Output(component_id="hidden-table-data", component_property="children"),
+        [
+            Input("hidden-graph-data", "children"),
+            Input(component_id="benchmarker", component_property="value"),
+            Input(component_id="optimizer", component_property="value"),
+        ],
+    )
+    def convert_data_to_dict_format(values, benchmark, optimizer):
+        values = json.loads(values)
+
+        initial_port = pd.DataFrame(values["initial_port"])
+        initial_port["Date"] = pd.to_datetime(values["dates"], format="%Y-%m-%d")
+        initial_port.set_index("Date", inplace=True)
+
+        (
+            portfolio,
+            allocs,
+            port_return,
+            volatility,
+            sharpe,
+        ) = calculations.optimize_portfolio(
+            initial_port, benchmark, optimizer, values["stocks"]
+        )
+        print(values["stocks"])
+
+        result = dict(
+            portfolio=portfolio.to_dict("records"),
+            allocations=allocs,
+            port_return=port_return,
+            volatility=volatility,
+            sharpe=sharpe,
+            benchmark=benchmark,
+            dates=values["dates"],
+            stocks=values["stocks"],
+        )
 
         return json.dumps(result)
-
-
-def getPortfolio(daterange, symbols, df=None):
-    symbols = symbols + ["SPY", "IWM", "VEU"]
-    params = {
-        "symbols": ",".join(symbols),
-        "types": "chart",
-        "range": daterange,
-        "filter": "close,date",
-    }
-    url = "https://api.iextrading.com/1.0/stock/market/batch"
-    a = requests.get(url, params=params).json()
-    for i in a.keys():
-        b = pd.DataFrame(a[i]["chart"])
-        b["date"] = pd.to_datetime(b["date"])
-        b.set_index("date", inplace=True)
-        b.columns = [i]
-        if df is None:
-            df = b
-        else:
-            df = df.join(b)
-    dates = list(df.index.strftime("%Y-%m-%d"))
-    print(type(df["SPY"][0]))
-    return df, dates

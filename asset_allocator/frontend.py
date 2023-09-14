@@ -1,8 +1,8 @@
 """Contains the html layout for the portfolio optimization asset allocator tab"""
 
+import pandas as pd
 from dash import dcc, html
 from dash.dash_table import DataTable
-import pandas as pd
 
 styling = {  # 'textAlign':'center',
     "font-family": "Georgia",
@@ -61,7 +61,7 @@ def load_html() -> html.Div:
                             html.Label("Select Securities", style=styling),
                             dcc.Dropdown(
                                 options=securities,
-                                value=["NKE", "BOOM", "AMD"],
+                                value=["GOOG", "AAPL", "F"],
                                 multi=True,
                                 clearable=False,
                                 id="stock-picker",
@@ -92,9 +92,6 @@ def load_html() -> html.Div:
                     ),
                     html.Label("Current Portfolio", style=styling),
                     DataTable(
-                        columns=[
-                            {"id": i, "name": i} for i in ["NKE", "BOOM", "AMD"]
-                        ],  # initialise the rows
                         id="datatable",
                         style_cell=styling3,
                     ),
