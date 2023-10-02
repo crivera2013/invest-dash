@@ -27,8 +27,8 @@ styling3 = {  # 'textAlign':'center',
 }
 
 securities = pd.read_csv("asset_allocator/ticker_universe.csv")
-securities.columns = ["label"]
-securities["value"] = securities["label"]
+securities.columns = ["ticker"]
+securities["value"] = securities["ticker"]
 securities = securities.to_dict("records")
 securities.append({"label": "GLD", "value": "GLD"})
 

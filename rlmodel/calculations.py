@@ -5,16 +5,37 @@ from rlmodel import strategylearner as sl
 import Indicators as ind
 
 
+import yfinance as yf
+from pandas_datareader import data as pdr
+
+yf.pdr_override()  # configure pandas datareader to query yahoo finance
+
+
+def get_stock_data(  # pylint: disable=dangerous-default-value
+    start_date: pd.Timestamp,
+    end_date: pd.Timestamp,
+    ticker: str = "AAPL",  # type: ignore
+) -> pd.DataFrame:
+    """Wrapper for querying data through pandas datareader"""
+
+    data_close_df: pd.DataFrame = pdr.get_data_yahoo(
+        ticker, start=start_date, end=end_date
+    )[
+        ["Adj Close", "Volume"]
+    ]  # type: ignore
+    return data_close_df
+
+
 def compute_portvals(
-    symbol="JPM",
-    sd="2010-01-01",
-    ed="2011-12-31",
-    orders=[],
-    start_val=100000.0,
-    commission=9.95,
-    impact=0.005,
+    symbol: str = "JPM",
+    start_date: pd.Timestamp = pd.Timestamp("2010-01-01"),
+    end_date: pd.Timestamp = pd.Timestamp("2011-12-31"),
+    orders: pd.DataFrame = pd.DataFrame(),
+    start_val: float = 100000.0,
+    commission: float = 9.95,
+    impact: float = 0.005,
 ):
-    prices = ind.getStock(symbol, sd, ed)
+    prices: pd.DataFrame = get_stock_data(start_date, end_date, symbol)
     prices.dropna(inplace=True)
     # get all stock symbols
 

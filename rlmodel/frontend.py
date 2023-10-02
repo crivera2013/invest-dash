@@ -2,6 +2,9 @@
 
 from datetime import datetime as dt
 
+import pandas as pd
+from pandas.tseries.offsets import CustomBusinessDay
+
 from dash import dcc, html
 from dash.dash_table import DataTable
 
@@ -42,6 +45,11 @@ securities = [
     "QQQ",
 ]
 securities = [{"label": i, "value": i} for i in securities]
+
+CBD = CustomBusinessDay()
+
+START_DATE = pd.Timestamp.today() - pd.Timedelta(weeks=104) + CBD
+END_DATE = pd.Timestamp.today() - pd.Timedelta(weeks=52) + CBD
 
 
 def load_html() -> html.Div:
@@ -86,12 +94,8 @@ def load_html() -> html.Div:
                                 id="train-rl-date-ranger",
                                 min_date_allowed=dt(2008, 1, 1),
                                 max_date_allowed=dt.now().date(),
-                                start_date=dt(
-                                    dt.now().year - 2, dt.now().month, dt.now().day - 1
-                                ).date(),
-                                end_date=dt(
-                                    dt.now().year - 1, dt.now().month, dt.now().day - 1
-                                ).date(),
+                                start_date=START_DATE,
+                                end_date=END_DATE,
                                 calendar_orientation="horizontal",
                             ),
                         ],
@@ -103,13 +107,9 @@ def load_html() -> html.Div:
                             dcc.DatePickerRange(
                                 id="test-rl-date-ranger",
                                 min_date_allowed=dt(2008, 1, 1),
-                                max_date_allowed=dt.now().date(),
-                                start_date=dt(
-                                    dt.now().year - 1, dt.now().month, dt.now().day - 1
-                                ).date(),
-                                end_date=dt(
-                                    dt.now().year, dt.now().month, dt.now().day - 1
-                                ).date(),
+                                max_date_allowed=pd.Timestamp.today() - CBD,
+                                start_date=END_DATE,
+                                end_date=pd.Timestamp.today() - CBD,
                                 calendar_orientation="horizontal",
                             ),
                         ],
