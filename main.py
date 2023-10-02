@@ -12,6 +12,8 @@ external_stylesheets = ["https://codepen.io/chriddyp/pen/bWLwgP.css"]
 
 app = Dash(__name__, external_stylesheets=external_stylesheets)
 
+server = app.server
+
 asset_allocator_callbacks.get_callbacks(app)
 
 app.layout = html.Div(
@@ -76,4 +78,4 @@ This app is meant to show the following skills:
 
 # Only for running on development mode
 if __name__ == "__main__":
-    app.run_server(debug=True, host="0.0.0.0", port=8080)
+    app.run(debug=True)
